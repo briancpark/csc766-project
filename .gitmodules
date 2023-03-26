@@ -1,0 +1,6 @@
+[submodule "model_source/regnet"]
+	path = model_source/regnet
+	url = git@github.com:d-li14/regnet.pytorch.git
+[submodule "model_source/shufflenet"]
+	path = model_source/shufflenet
+	url = git@github.com:megvii-model/ShuffleNet-Series.git
