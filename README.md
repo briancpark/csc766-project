@@ -131,3 +131,8 @@ python tools/converter.py convert --config=../deployment_config/regnet.yml
 python tools/converter.py convert --config=../deployment_config/shufflenet.yml
 ```
 
+```sh
+python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode
+```
+
