@@ -1,0 +1,9 @@
+jinja2==2.10
+pyyaml==3.12
+sh==1.12.14
+numpy==1.14.0
+six==1.11.0
+tensorflow==1.8.0
+scipy==1.0.0
+filelock==3.0.0
+onnx==1.8.0
