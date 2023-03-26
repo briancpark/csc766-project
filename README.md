@@ -57,7 +57,6 @@ cd /opt/ && \
     rm -f android-ndk-r15c-linux-x86_64.zip
 
 export ANDROID_NDK_VERSION=r15c
-export ANDROID_NDK_VERSION=r25c
 export ANDROID_NDK=/opt/android-ndk-${ANDROID_NDK_VERSION}
 export ANDROID_NDK_HOME=${ANDROID_NDK}
 
@@ -66,6 +65,16 @@ export PATH=${PATH}:${ANDROID_NDK_HOME}
 ```
 
 IMPORTANT: Please make sure that you have developer mode enabled on the physical Android device that you're using. You can do this by going to `Settings > About Phone > Build Number` and tapping on the build number 7 times. After that, you should see a message that says `You are now a developer!`. Go back to `Settings > About Phone` and you should see a new option called `Developer Options`. Enable this option.
+
+
+In addition, you need libcurses, which may not be installed by default in Ubuntu.
+```sh
+sudo apt-get install libncurses5
+```
+
+When connecting an Android device, you may need to toggle on USB Debuggin in Developer Options. Once that is done and connected to USB, approve the connection. 
+
+Running `adb devics` should theoretical show your device.
 
 ### Python Installation
 You *MUST* use Python 3.6. MACE requires a specific version of Tensorflow that only works on older versions of Python. Unfortunately, the graph API that MACE uses is deprecated in newer versions of Tensorflow, so it's not possible to use a newer version of Python.
@@ -88,8 +97,6 @@ Please clone the fork of the MACE repository that I've created. This fork contai
 git clone git@github.com:briancpark/mace.git
 ```
 
-
-sudo apt-get install libncurses5
 
 
 ### Model Installation
