@@ -19,7 +19,12 @@ The hardware requirements are any Linux machine with Ubuntu installed and an And
 I've tried running on an M1 Mac, but the requirements for Python are set to 3.6, which is difficult to get installed natively on the ARM ISA. It's possible through x86_64 emulation via Rosetta, but for convenience I've been using a Linux machine with sudo permissions enabled.
 
 ## Setup
-Before getting the project setup, you'll need to install the dependencies as required by MACE.
+First, clone the repository and all submodules.
+```sh
+git clone --recurse git@github.com:briancpark/csc766-project.git
+```
+
+Next, you'll need to install the dependencies as required by MACE.
 
 ### CMake Installation
 CMake version 3.11.3 or higher is required to build MACE.
@@ -95,8 +100,34 @@ git clone git@github.com:megvii-model/ShuffleNet-Series.git
 #### RegNet
 git clone git@github.com:d-li14/regnet.pytorch.git
 
+
+After that run, 
+
+These are the sizes of the models after conversion to ONNX, which are relatively small.
+```
+11M     regnet.onnx
+20M     shufflenet.onnx
+```
+
 ### Evaluation
 The project was evaluated on a Mi 11 Lite. Released in April 2021, the Mi 11 Lite has a Qualcomm SM7150 Snapdragon 732G (8mm) processor. The CPU is an octa-core (2x2.3 GHz Kryo 470 Gold & 6x1.8 GHz Kryo 470 Silver) processor. The GPU is an Adreno 618. The device has 6GB of RAM and 128GB of storage. The device has a 6.55" AMOLED display with a resolution of 1080x2400 pixels. 
 
 The OS is Android 11 (RKQ1.200826.002), with MIUI 12.5.1. The device has a 4,250 mAh battery. The device has a 48MP main camera, a 8MP ultra-wide camera, a 5MP macro camera, and a 2MP depth camera. The device has a 16MP front-facing camera.
 Source: https://www.gsmarena.com/xiaomi_mi_11_lite-10665.php
+
+
+```sh
+python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
+python tools/onnx_optimizer.py ../onnx_models/regnet.onnx ../onnx_models/regnet_opt.onnx 
+```
+
+```sh
+sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
+sha256sum /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
+```
+
+```sh
+python tools/converter.py convert --config=../deployment_config/regnet.yml
+python tools/converter.py convert --config=../deployment_config/shufflenet.yml
+```
+
