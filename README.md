@@ -1,4 +1,6 @@
-# CSC 766 Final Project
+# DNN Operator Optimizations
+
+This is a final course project done for CSC 766: Code Optimizations of Scalar and Parallel Programs
 
 ## Overview
 Table of Contents
@@ -14,7 +16,7 @@ Table of Contents
 ## Prerequisites
 The hardware requirements are any Linux machine with Ubuntu installed and an Android smartphone. 
 
-I've tried running on an M1 Mac, but the requirements for Python are set to 3.6, which is difficult to get installed natively on the ARM ISA. It's possible via Rosetta, but for convenience I've been using a Linux machine with sudo permissions enabled.
+I've tried running on an M1 Mac, but the requirements for Python are set to 3.6, which is difficult to get installed natively on the ARM ISA. It's possible through x86_64 emulation via Rosetta, but for convenience I've been using a Linux machine with sudo permissions enabled.
 
 ## Setup
 Before getting the project setup, you'll need to install the dependencies as required by MACE.
@@ -76,3 +78,25 @@ pip3 install -r requirements.txt
 ### MACE Installation
 At last, the MACE installation. Please follow the instructions [here](https://mace.readthedocs.io/en/latest/user/installation.html) to install MACE. 
 
+Please clone the fork of the MACE repository that I've created. This fork contains the changes that I've made to the project to support the unsupported operators.
+```sh
+git clone git@github.com:briancpark/mace.git
+```
+
+
+sudo apt-get install libncurses5
+
+
+### Model Installation
+The task of this project is to support the operators for DNNs ShuffleNet and RegNet.
+
+#### ShuffleNet
+git clone git@github.com:megvii-model/ShuffleNet-Series.git
+#### RegNet
+git clone git@github.com:d-li14/regnet.pytorch.git
+
+### Evaluation
+The project was evaluated on a Mi 11 Lite. Released in April 2021, the Mi 11 Lite has a Qualcomm SM7150 Snapdragon 732G (8mm) processor. The CPU is an octa-core (2x2.3 GHz Kryo 470 Gold & 6x1.8 GHz Kryo 470 Silver) processor. The GPU is an Adreno 618. The device has 6GB of RAM and 128GB of storage. The device has a 6.55" AMOLED display with a resolution of 1080x2400 pixels. 
+
+The OS is Android 11 (RKQ1.200826.002), with MIUI 12.5.1. The device has a 4,250 mAh battery. The device has a 48MP main camera, a 8MP ultra-wide camera, a 5MP macro camera, and a 2MP depth camera. The device has a 16MP front-facing camera.
+Source: https://www.gsmarena.com/xiaomi_mi_11_lite-10665.php
