@@ -1,2 +1,6 @@
 *.onnx
 __pycache__
+
+
+# Ignore submodules in model_source directory
+model_source/*/.*

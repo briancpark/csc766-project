@@ -4,3 +4,9 @@
 [submodule "model_source/shufflenet"]
 	path = model_source/shufflenet
 	url = git@github.com:megvii-model/ShuffleNet-Series.git
+[submodule "mace"]
+	path = mace
+	url = git@github.com:briancpark/mace.git
+[submodule "mace-models"]
+	path = mace-models
+	url = git@github.com:XiaoMi/mace-models.git
