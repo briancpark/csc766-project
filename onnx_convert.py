@@ -6,7 +6,7 @@ from network import ShuffleNetV2_Plus
 from model_source.regnet.regnet import regnetx_002
 
 
-def convert_model(model_name):
+def convert_model(model_name, backend="onnx"):
     if model_name == "shufflenet":
         architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
         model = ShuffleNetV2_Plus(architecture=architecture, model_size="Small")
@@ -20,22 +20,40 @@ def convert_model(model_name):
     model.eval()
     out = model(x)
 
-    torch.onnx.export(
-        model,  # model being run
-        x,  # model input (or a tuple for multiple inputs)
-        f"onnx_models/{model_name}.onnx",  # where to save the model (can be a file or file-like object)
-        export_params=True,  # store the trained parameter weights inside the model file
-        opset_version=7,  # the ONNX version to export the model to
-        do_constant_folding=True,  # whether to execute constant folding for optimization
-        input_names=["input"],  # the model's input names
-        output_names=["output"],  # the model's output names
-        # dynamic_axes={
-        #     "input": {0: "batch_size"},  # variable length axes
-        #     "output": {0: "batch_size"},
-        # },
-    )
+    if backend == "onnx":
+        torch.onnx.export(
+            model,  # model being run
+            x,  # model input (or a tuple for multiple inputs)
+            f"onnx_models/{model_name}.onnx",  # where to save the model (can be a file or file-like object)
+            export_params=True,  # store the trained parameter weights inside the model file
+            opset_version=7,  # the ONNX version to export the model to
+            do_constant_folding=True,  # whether to execute constant folding for optimization
+            input_names=["input"],  # the model's input names
+            output_names=["output"],  # the model's output names
+            # dynamic_axes={
+            #     "input": {0: "batch_size"},  # variable length axes
+            #     "output": {0: "batch_size"},
+            # },
+        )
+    elif backend == "coreml":
+        import coremltools as ct
+
+        traced_model = torch.jit.trace(model, x)
+        out = traced_model(x)
+
+        # Using image_input in the inputs parameter:
+        # Convert to Core ML program using the Unified Conversion API.
+        coreml_model = ct.convert(
+            traced_model, convert_to="mlprogram", inputs=[ct.TensorType(shape=x.shape)]
+        )
+
+        coreml_model.save(f"coreml_models/{model_name}.mlpackage")
+    else:
+        TypeError("Backend not supported")
 
 
 if __name__ == "__main__":
-    convert_model("shufflenet")
-    convert_model("regnet")
+    convert_model("shufflenet", backend="onnx")
+    convert_model("regnet", backend="onnx")
+    convert_model("shufflenet", backend="coreml")
+    convert_model("regnet", backend="coreml")

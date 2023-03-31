@@ -123,14 +123,16 @@ The OS is Android 11 (RKQ1.200826.002), with MIUI 12.5.1. The device has a 4,250
 Source: https://www.gsmarena.com/xiaomi_mi_11_lite-10665.php
 
 
+
+### Debugging and Running Notes
 ```sh
-python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
 python tools/onnx_optimizer.py ../onnx_models/regnet.onnx ../onnx_models/regnet_opt.onnx 
+python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
 ```
 
 ```sh
-sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
 sha256sum /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
+sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
 ```
 
 ```sh
@@ -143,3 +145,33 @@ python tools/converter.py run --config=../deployment_config/regnet.yml --debug_m
 python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode
 ```
 
+
+The files are uploaded onto `/data/local/tmp/mace_run/`
+
+
+
+Here's a sample on how to benchmark the kernels.
+```
+python tools/bazel_adb_run.py --target="//test/ccbenchmark:mace_cc_benchmark" \
+    --run_target=True  --args="--filter=.*BM_CONV.*"
+```
+
+
+Look here for a comprehensive list of supported operators: https://mace.readthedocs.io/en/latest/user_guide/op_lists.html
+
+
+
+
+# Here's a refernc esolution:
+```
+python tools/converter.py convert --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
+
+python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
+
+# Test model run time
+python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml --round=100
+
+# Validate the correctness by comparing the results against the
+# original model and framework, measured with cosine distance for similarity.
+python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml --validate
+```

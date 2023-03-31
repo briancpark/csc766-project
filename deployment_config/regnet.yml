@@ -4,7 +4,7 @@ target_abis: [arm64-v8a]
 model_graph_format: file
 model_data_format: file
 models:
-  mobilenet_v1: # model tag, which will be used in model loading and must be specific.
+  regnet: # model tag, which will be used in model loading and must be specific.
     platform: onnx
     # path to your onnx model file. Support local path, http:// and https://
     model_file_path: /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
@@ -32,7 +32,7 @@ models:
         input_shapes:
           - 1,224,224,3
         output_tensors:
-          - MobilenetV1/Predictions/Reshape_1
+          - output
         output_shapes:
           - 1,1000
         # onnx backend framwork for validation. Suppport pytorch/caffe/tensorflow. Default is tensorflow.
