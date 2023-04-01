@@ -7,7 +7,7 @@ models:
   regnet: # model tag, which will be used in model loading and must be specific.
     platform: onnx
     # path to your onnx model file. Support local path, http:// and https://
-    model_file_path: /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
+    model_file_path: ../onnx_models/regnet_opt.onnx 
     # sha256_checksum of your model's onnx file.
     # use this command to get the sha256_checksum: sha256sum path/to/your/pb/file
     model_sha256_checksum: 2de98798e622c3609d2012e79598b7441365f45608a107d3c47ce4461e390fa4

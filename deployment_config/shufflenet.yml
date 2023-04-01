@@ -1,5 +1,5 @@
 # The name of library
-library_name: mobilenet
+library_name: shufflenet
 target_abis: [arm64-v8a]
 model_graph_format: file
 model_data_format: file
@@ -7,7 +7,7 @@ models:
   shufflenet: # model tag, which will be used in model loading and must be specific.
     platform: onnx
     # path to your onnx model file. Support local path, http:// and https://
-    model_file_path: /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
+    model_file_path: ../onnx_models/shufflenet_opt.onnx
     # sha256_checksum of your model's onnx file.
     # use this command to get the sha256_checksum: sha256sum path/to/your/pb/file
     model_sha256_checksum: 63d5d81528ab76b959c4ab708038b4a3d9e7876ddcf63a06063e476faf29ef8e
