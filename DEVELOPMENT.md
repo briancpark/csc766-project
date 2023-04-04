@@ -2,6 +2,19 @@
 A set of logs and debugging notes to help with devleopment process 
 
 
+### I cannot login to my Android shell?
+If you cannot login to you android shell via adb because you get the following message:
+```
+no permissions (user bcpark is not in the plugdev group)
+```
+Then you may need to troubleshoot this by restarting the adb server. You can do so by running the following commands:
+```sh
+sudo adb kill-server
+sudo adb start-server
+```
+
+Note that upon rebooting the server, you will need to physically reauthenticate the Android device in order to login the shell and let MACE run models on the phone. 
+
 ### RegNet Notes
 All that needs to be supported is convolutions with groups, or grouped convolutions.
 
@@ -34,9 +47,20 @@ Here are just the unique kernels to focus on:
 | 1,368,7,7 | 1,368,7,7 | 368,8,3,3 | 368 | 3,3 | 1,1 | 1,1,1,1 | 46 |
 
 
+When GPU is on NHWC, when CPU only, NCHW. This is because the GPU is a Mali GPU, which is a NCHW GPU. T
+
 
 How to debug with gdb
 This configuration is impossible unless you have a rooted device, which requires you to unlock the bootloader and flash a custom recovery image.
+
+All the files to run are pushed to:
+/data/local/tmp/mace_run
+
+Here's an example of what the executable looks like if you want to run it directly in the shell under `cmd_file-r**`:
+```
+LD_LIBRARY_PATH=/data/local/tmp/mace_run MACE_TUNING=0 MACE_OUT_OF_RANGE_CHECK=0 MACE_CPP_MIN_VLOG_LEVEL=0 MACE_RUN_PARAMETER_PATH=/data/local/tmp/mace_run/mace_run.config MACE_INTERNAL_STORAGE_PATH=/data/local/tmp/mace_run/interior/ MACE_LIMIT_OPENCL_KERNEL_TIME=0 MACE_OPENCL_QUEUE_WINDOW_SIZE=0 MACE_RUNTIME_FAILURE_RATIO=0.000000 MACE_LOG_TENSOR_RANGE=0 /data/local/tmp/mace_run/mace_run_static --model_name=regnet --input_node='input' --output_node='output' --input_shape=1,224,224,3 --output_shape=1,1000 --input_data_type=float32 --output_data_type=float32 --input_data_format=NHWC --output_data_format=NHWC --input_file=/data/local/tmp/mace_run/model_input --output_file=/data/local/tmp/mace_run/model_out --input_dir= --output_dir= --model_data_file=/data/local/tmp/mace_run/regnet.data --round=1 --restart_round=1 --num_threads=-1 --cpu_affinity_policy=1 --opencl_cache_reuse_policy=1 --opencl_cache_full_path=/data/local/tmp/mace_run/interior/mace_cl_compiled_program.bin --gpu_perf_hint=3 --gpu_priority_hint=3 --model_file=/data/local/tmp/mace_run/regnet.pb --opencl_binary_file=/data/local/tmp/mace_run/regnet_compiled_opencl_kernel.M2101K9AG.sm6150.bin --opencl_parameter_file=/data/local/tmp/mace_run/regnet_tuned_opencl_parameter.M2101K9AG.sm6150.bin --accelerator_cache_policy=0 --accelerator_binary_file= --accelerator_storage_file= --apu_boost_hint=100 --apu_preference_hint=1
+```
+
 ```
 # push gdbserver to your phone
 adb push $ANDROID_NDK_HOME/prebuilt/android-arm64/gdbserver/gdbserver /data/local/tmp/
@@ -56,8 +80,8 @@ export PLATFORMS_21_LIB=$ANDROID_NDK_HOME/platforms/android-21/arch-arm/usr/lib/
 
 
 # start gdbserver，make gdb listen to port 6000
-# adb shell /data/local/tmp/gdbserver :6000 /path/to/binary/on/phone/example_bin
-adb shell LD_LIBRARY_PATH=/dir/to/dynamic/library/on/phone/ /data/local/tmp/gdbserver :6000 /data/local/tmp/mace_run/example_bin
+adb shell /data/local/tmp/gdbserver :6000 /data/local/tmp/mace_run/cmd_file-regnet-1680304295.589991
+adb shell LD_LIBRARY_PATH=/data/local/tmp/mace_run /data/local/tmp/gdbserver :6000 /data/local/tmp/mace_run/example_bin
 # or attach a running process
 adb shell /data/local/tmp/gdbserver :6000 --attach 8700
 # forward tcp port

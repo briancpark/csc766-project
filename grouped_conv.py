@@ -26,7 +26,7 @@ def torch_conv2d(input, output, weight, bias, kernel, stride, padding, groups, x
     return y
 
 
-def naive_conv2d(input, weight, bias, kernel, stride, padding, groups, x, Weight, Bias):
+def naive_conv2d_nhwc(input, weight, bias, kernel, stride, padding, groups, x, Weight, Bias):
     # naive convolution algorithm in pytorch
     # Weights is W, Bias is B, input is x
     # y is the output to be returned
@@ -110,7 +110,7 @@ def check_naive_conv2d(input, output, weight, bias, kernel, stride, padding, gro
         y_conv = conv(x)
 
     with torch.no_grad():
-        y = naive_conv2d(
+        y = naive_conv2d_nhwc(
             input,
             weight,
             bias,
