@@ -136,13 +136,15 @@ sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
 ```
 
 ```sh
-python tools/converter.py convert --config=../deployment_config/regnet.yml
-python tools/converter.py convert --config=../deployment_config/shufflenet.yml
+python tools/converter.py convert --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
+python tools/converter.py convert --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
 ```
 
+python tools/converter.py convert --config=../mace_models/
+
 ```sh
-python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode
-python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode
+python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
 ```
 
 
@@ -175,3 +177,8 @@ python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.
 # original model and framework, measured with cosine distance for similarity.
 python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml --validate
 ```
+
+
+python tools/converter.py convert --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
+
+python tools/converter.py run --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3

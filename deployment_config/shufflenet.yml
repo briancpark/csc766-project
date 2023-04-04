@@ -10,7 +10,7 @@ models:
     model_file_path: ../onnx_models/shufflenet_opt.onnx
     # sha256_checksum of your model's onnx file.
     # use this command to get the sha256_checksum: sha256sum path/to/your/pb/file
-    model_sha256_checksum: 63d5d81528ab76b959c4ab708038b4a3d9e7876ddcf63a06063e476faf29ef8e
+    model_sha256_checksum: 2166b15f49f836f9627a49bb22545dbca3755fb178fcf3f084b2597a272ba740
     # define your model's interface
     # if there multiple inputs or outputs, write like blow:
     # subgraphs:
@@ -34,7 +34,7 @@ models:
         output_tensors:
           - output
         output_shapes:
-          - 1,1001
+          - 1,1000
         # onnx backend framwork for validation. Suppport pytorch/caffe/tensorflow. Default is tensorflow.
         backend: tensorflow
     # cpu, gpu or cpu+gpu
