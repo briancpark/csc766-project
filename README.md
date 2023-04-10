@@ -82,9 +82,9 @@ You *MUST* use Python 3.6. MACE requires a specific version of Tensorflow that o
 Please create a conda environment with Python 3.6 installed. If you don't have conda installed, please follow the instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 ```sh
 conda create -n csc766 python=3.6
-```
+```pip3 install --upgrade pip
 
-Installl all the requirements for MACE, which are pinned in `requirements.txt`.
+Install all the requirements for MACE, which are pinned in `requirements.txt`. It's very crucial that you install the exact versions of the packages listed in the file. Sometimes, different ONNX versions produce slightly different outputs, which can cause the MACE conversion to fail.
 ```sh
 pip3 install -r requirements.txt
 ```
@@ -140,8 +140,6 @@ python tools/converter.py convert --config=../deployment_config/regnet.yml --deb
 python tools/converter.py convert --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
 ```
 
-python tools/converter.py convert --config=../mace_models/
-
 ```sh
 python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
 python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
@@ -164,7 +162,7 @@ Look here for a comprehensive list of supported operators: https://mace.readthed
 
 
 
-# Here's a refernc esolution:
+# Here's a reference on how to run one of the working examples:
 ```
 python tools/converter.py convert --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
 

@@ -4,12 +4,13 @@ import torch
 sys.path.append(os.path.expanduser("model_source/shufflenet/ShuffleNetV2+"))
 from network import ShuffleNetV2_Plus
 from model_source.regnet.regnet import regnetx_002
-
+from torchvision import models
 
 def convert_model(model_name, backend="onnx"):
     if model_name == "shufflenet":
-        architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
-        model = ShuffleNetV2_Plus(architecture=architecture, model_size="Small")
+        # architecture = [0, 0, 3, 1, 1, 1, 0, 0, 2, 0, 2, 1, 1, 0, 2, 0, 2, 1, 3, 2]
+        # model = ShuffleNetV2_Plus(architecture=architecture, model_size="Small")
+        model = models.shufflenet_v2_x0_5(pretrained=True)
     elif model_name == "regnet":
         model = regnetx_002()
     else:

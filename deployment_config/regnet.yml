@@ -13,19 +13,6 @@ models:
     model_sha256_checksum: 2de98798e622c3609d2012e79598b7441365f45608a107d3c47ce4461e390fa4
     # define your model's interface
     # if there multiple inputs or outputs, write like blow:
-    # subgraphs:
-    # - input_tensors:
-    #     - input0
-    #     - input1
-    #   input_shapes:
-    #     - 1,224,224,3
-    #     - 1,224,224,3
-    #    output_tensors:
-    #      - output0
-    #      - output1
-    #    output_shapes:
-    #      - 1,1001
-    #      - 1,1001
     subgraphs:
       - input_tensors:
           - input
