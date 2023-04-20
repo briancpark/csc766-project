@@ -25,6 +25,5 @@ models:
         # onnx backend framwork for validation. Suppport pytorch/caffe/tensorflow. Default is tensorflow.
         backend: tensorflow
     # cpu, gpu or cpu+gpu
-    runtime: cpu+gpu
-    winograd: 0
+    runtime: gpu
 

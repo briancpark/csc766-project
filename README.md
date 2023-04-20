@@ -129,38 +129,57 @@ Source: https://www.gsmarena.com/xiaomi_mi_11_lite-10665.php
 python tools/onnx_optimizer.py ../onnx_models/regnet.onnx ../onnx_models/regnet_opt.onnx 
 python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
 ```
-
+ 
 ```sh
 sha256sum /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
 sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
 ```
 
+To compile and run RegNet:
 ```sh
-python tools/converter.py convert --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
-python tools/converter.py convert --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
+python tools/converter.py convert --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3 && \
+python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
 ```
 
+To compile and run ShuffleNet:
 ```sh
-python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
+python tools/converter.py convert --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3 && \
 python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
 ```
+
+There are 
+```sh
+python tools/converter.py convert --config=../deployment_config/regnet.yml
+```
+
+To verify model correctness, you can run the following command:
+```sh
+python tools/converter.py run --config=../deployment_config/regnet.yml --validate
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --validate
+```
+
+
+To benchmark the model, you can run the following command:
+```sh
+# RegNet
+python tools/converter.py run --config=../deployment_config/regnet.yml --benchmark --round=1000 --gpu_priority_hint=3
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --round=1000 --gpu_priority_hint=3
+
+# ShuffleNet
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --benchmark_repetitions=1 --benchmark_warmup=0
+```
+
+
+To benchmark a specific OP (not done yet):
+python tools/bazel_adb_run.py --target="//test/ccbenchmark:mace_cc_benchmark" --run_target=True  --args="--filter=.*CONV.*"
 
 
 The files are uploaded onto `/data/local/tmp/mace_run/`
 
-
-
 Here's a sample on how to benchmark the kernels.
-```
-python tools/bazel_adb_run.py --target="//test/ccbenchmark:mace_cc_benchmark" \
-    --run_target=True  --args="--filter=.*BM_CONV.*"
-```
 
 
 Look here for a comprehensive list of supported operators: https://mace.readthedocs.io/en/latest/user_guide/op_lists.html
-
-
-
 
 # Here's a reference on how to run one of the working examples:
 ```
@@ -180,3 +199,5 @@ python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.
 python tools/converter.py convert --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
 
 python tools/converter.py run --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
+
+

@@ -197,3 +197,52 @@ sh.ErrorReturnCode_134:
 
   STDERR:
 ```
+
+
+I mace/utils/statistics.cc:343] |         Op Type | Count | Avg(ms) |      % |    cdf% |       MACs | GMACPS | Called times |
+I mace/utils/statistics.cc:343] ---------------------------------------------------------------------------------------------
+I mace/utils/statistics.cc:343] |          Conv2D |    37 |   6.138 | 56.713 |  56.713 | 37,632,000 |  6.131 |           37 |
+I mace/utils/statistics.cc:343] |         Pooling |     1 |   1.594 | 14.728 |  71.440 |          0 |  0.000 |            1 |
+I mace/utils/statistics.cc:343] | DepthwiseConv2d |    19 |   1.428 | 13.194 |  84.635 |  1,820,448 |  1.275 |           19 |
+I mace/utils/statistics.cc:343] |          MatMul |     1 |   0.510 |  4.712 |  89.347 |  1,024,000 |  2.008 |            1 |
+I mace/utils/statistics.cc:343] |          Concat |    16 |   0.361 |  3.335 |  92.682 |          0 |  0.000 |           16 |
+I mace/utils/statistics.cc:343] |  ChannelShuffle |    16 |   0.346 |  3.197 |  95.879 |          0 |  0.000 |           16 |
+I mace/utils/statistics.cc:343] |           Slice |    26 |   0.346 |  3.197 |  99.076 |          0 |  0.000 |           26 |
+I mace/utils/statistics.cc:343] |          Reduce |     1 |   0.100 |  0.924 | 100.000 |          0 |  0.000 |           
+
+
+
+GPU
+I mace/utils/statistics.cc:343] |         Op Type | Count | Avg(ms) |      % |    cdf% |       MACs | GMACPS | Called times |
+I mace/utils/statistics.cc:343] ---------------------------------------------------------------------------------------------
+I mace/utils/statistics.cc:343] |       Transpose |    53 |  71.720 | 75.451 |  75.451 |          0 |  0.000 |           53 |
+I mace/utils/statistics.cc:343] |          MatMul |     1 |  10.605 | 11.157 |  86.608 |  1,024,000 |  0.097 |            1 |
+I mace/utils/statistics.cc:343] |          Reduce |     1 |   5.205 |  5.476 |  92.084 |          0 |  0.000 |            1 |
+I mace/utils/statistics.cc:343] |           Slice |    26 |   3.586 |  3.773 |  95.856 |          0 |  0.000 |           26 |
+I mace/utils/statistics.cc:343] |          Conv2D |    37 |   1.487 |  1.564 |  97.420 | 37,632,000 | 25.307 |           37 |
+I mace/utils/statistics.cc:343] | BufferTransform |    54 |   0.903 |  0.950 |  98.370 |          0 |  0.000 |           54 |
+I mace/utils/statistics.cc:343] |          Concat |    16 |   0.839 |  0.883 |  99.253 |          0 |  0.000 |           16 |
+I mace/utils/statistics.cc:343] | DepthwiseConv2d |    19 |   0.385 |  0.405 |  99.658 |  1,820,448 |  4.728 |           19 |
+I mace/utils/statistics.cc:343] |  ChannelShuffle |    16 |   0.220 |  0.231 |  99.890 |          0 |  0.000 |           16 |
+I mace/utils/statistics.cc:343] |         Pooling |     1 |   0.105 |  0.110 | 100.000 |          0 |  0.000 |       
+
+
+CPU
+
+
+
+GPU
+
+I mace/utils/statistics.cc:343]                                        Stat by Op Type
+I mace/utils/statistics.cc:343] ----------------------------------------------------------------------------------------------
+I mace/utils/statistics.cc:343] |         Op Type | Count | Avg(ms) |      % |    cdf% |        MACs | GMACPS | Called times |
+I mace/utils/statistics.cc:343] ----------------------------------------------------------------------------------------------
+I mace/utils/statistics.cc:343] |      Activation |    26 |  53.806 | 47.933 |  47.933 |           0 |  0.000 |           26 |
+I mace/utils/statistics.cc:343] |       Transpose |    26 |  46.368 | 41.307 |  89.240 |           0 |  0.000 |           26 |
+I mace/utils/statistics.cc:343] |          MatMul |     1 |   5.870 |  5.229 |  94.470 |     368,000 |  0.063 |            1 |
+I mace/utils/statistics.cc:343] |          Conv2D |    31 |   5.282 |  4.705 |  99.175 | 172,423,552 | 32.644 |           31 |
+I mace/utils/statistics.cc:343] | BufferTransform |    28 |   0.627 |  0.559 |  99.734 |           0 |  0.000 |           28 |
+I mace/utils/statistics.cc:343] |         Eltwise |    13 |   0.264 |  0.235 |  99.969 |           0 |  0.000 |           13 |
+I mace/utils/statistics.cc:343] |          Reduce |     1 |   0.030 |  0.027 |  99.996 |           0 |  0.000 |            1 |
+I mace/utils/statistics.cc:343] |         Reshape |     1 |   0.005 |  0.004 | 100.000 |           0 |  0.000 |            1 |
+I mace/utils/statistics.cc:343] |     GroupConv2d |    13 |   0.000 |  0.000 | 100.000 |           0 |  0.000 |           13 |
