@@ -82,9 +82,9 @@ You *MUST* use Python 3.6. MACE requires a specific version of Tensorflow that o
 Please create a conda environment with Python 3.6 installed. If you don't have conda installed, please follow the instructions [here](https://docs.conda.io/projects/conda/en/latest/user-guide/install/).
 ```sh
 conda create -n csc766 python=3.6
-```
+```pip3 install --upgrade pip
 
-Installl all the requirements for MACE, which are pinned in `requirements.txt`.
+Install all the requirements for MACE, which are pinned in `requirements.txt`. It's very crucial that you install the exact versions of the packages listed in the file. Sometimes, different ONNX versions produce slightly different outputs, which can cause the MACE conversion to fail.
 ```sh
 pip3 install -r requirements.txt
 ```
@@ -123,23 +123,81 @@ The OS is Android 11 (RKQ1.200826.002), with MIUI 12.5.1. The device has a 4,250
 Source: https://www.gsmarena.com/xiaomi_mi_11_lite-10665.php
 
 
+
+### Debugging and Running Notes
 ```sh
-python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
 python tools/onnx_optimizer.py ../onnx_models/regnet.onnx ../onnx_models/regnet_opt.onnx 
+python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
 ```
-
+ 
 ```sh
-sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
 sha256sum /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
+sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
 ```
 
+To compile and run RegNet:
+```sh
+python tools/converter.py convert --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3 && \
+python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode --vlog_level=3
+```
+
+To compile and run ShuffleNet:
+```sh
+python tools/converter.py convert --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3 && \
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
+```
+
+There are 
 ```sh
 python tools/converter.py convert --config=../deployment_config/regnet.yml
-python tools/converter.py convert --config=../deployment_config/shufflenet.yml
 ```
 
+To verify model correctness, you can run the following command:
 ```sh
-python tools/converter.py run --config=../deployment_config/regnet.yml --debug_mode
-python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode
+python tools/converter.py run --config=../deployment_config/regnet.yml --validate
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --validate
 ```
+
+
+To benchmark the model, you can run the following command:
+```sh
+# RegNet
+python tools/converter.py run --config=../deployment_config/regnet.yml --benchmark --round=1000 --gpu_priority_hint=3
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --round=1000 --gpu_priority_hint=3
+
+# ShuffleNet
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --benchmark_repetitions=1 --benchmark_warmup=0
+```
+
+
+To benchmark a specific OP (not done yet):
+python tools/bazel_adb_run.py --target="//test/ccbenchmark:mace_cc_benchmark" --run_target=True  --args="--filter=.*CONV.*"
+
+
+The files are uploaded onto `/data/local/tmp/mace_run/`
+
+Here's a sample on how to benchmark the kernels.
+
+
+Look here for a comprehensive list of supported operators: https://mace.readthedocs.io/en/latest/user_guide/op_lists.html
+
+# Here's a reference on how to run one of the working examples:
+```
+python tools/converter.py convert --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
+
+python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
+
+# Test model run time
+python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml --round=100
+
+# Validate the correctness by comparing the results against the
+# original model and framework, measured with cosine distance for similarity.
+python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml --validate
+```
+
+
+python tools/converter.py convert --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
+
+python tools/converter.py run --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
+
 
