@@ -25,7 +25,7 @@ sudo adb start-server
 Note that upon rebooting the server, you will need to physically reauthenticate the Android device in order to login the shell and let MACE run models on the phone. 
 
 ## RegNet Notes
-All that needs to be supported is convolutions with groups, or grouped convolutions.
+All that needs to be supported is convolutions with groups, or grouped convolutions. There are a total of 13 grouped convolutions in the RegNet model.
 
 To debug and ensure correctness, I have outputted all the information needed to replicate step by step on another deep learning framework or library. Note that all of the parameters are based on the assumption of batch size 1. They all have dialation of 1. They are all zero padded.
 Here are the nodes that are group convolutions in the ONNX model (Assume NCHW and IOHW formats):
@@ -59,16 +59,42 @@ Here are just the unique microkernels to focus on:
 
 Note that MACE prefers NHWC format on the GPU since that is optimal for GPU and OpenCL. The CPU preferes NCHW format. I believe CPU is more flexible, but there may be performance penalties as the MACE focuses more on NCHW format for CPU.
 
+
+When compared against the CPU and GPU configrations, here are some notes:
+* CPU compiles to a total of 86 ops, this is because I didn't fuse any activations with the group convolutions
+* GPU compiles to a total of 75 ops
+* Only the last GEMM or matmul will fallback to CPU on GPU configuration
+
 ## ShuffleNet Notes
-ShuffleNet supports grouped convolution on the CPU and GPU, but for GPU, it only supports groups of 4. The task is to support groups of 2 for the specific ShuffleNet model that I am using.
+ShuffleNet supports grouped convolution on the CPU and GPU, but for GPU, it only supports groups of 4. The task is to support groups of 2 for the specific ShuffleNet model that I am using. There are a total of 16 channel shuffle ops in the ShuffleNet model.
 
+|         Op Type |  Output Shape |           name |
+|-----------------|---------------|----------------|
+|  ChannelShuffle |  [1,48,28,28] |   Transpose_34 |
+|  ChannelShuffle |  [1,48,28,28] |   Transpose_82 |
+|  ChannelShuffle |  [1,48,28,28] |  Transpose_130 |
+|  ChannelShuffle |  [1,48,28,28] |  Transpose_178 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_215 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_263 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_311 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_359 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_407 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_455 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_503 |
+|  ChannelShuffle |  [1,96,14,14] |  Transpose_551 |
+|  ChannelShuffle |   [1,192,7,7] |  Transpose_588 |
+|  ChannelShuffle |   [1,192,7,7] |  Transpose_636 |
+|  ChannelShuffle |   [1,192,7,7] |  Transpose_684 |
+|  ChannelShuffle |   [1,192,7,7] |  Transpose_732 |
 
-
+When compared against the CPU and GPU configrations, here are some notes:
+* CPU compiles to a total of 117 ops
+* GPU compiles to a total of 224 ops
+* GEMM, Reduce Mean, Slice, Concat all fallback to CPU on GPU configuration
+* There are drastically more ops on the GPU configuration because of the fallbacks to CPU, and it incurs a lot of overhead because there are transpose ops inserted to convert from NHWC to NCHW and vice versa.
 
 ## Results
 Here, I show some logs and results from running the models on the Android device. 
-
-
 
 ### RegNet
 
@@ -211,6 +237,3 @@ set solib-search-path $SYSTEM_LIB:$SYSTEM_BIN:$PLATFORMS_21_LIB
 # then you can use it as host gdb, e.g.,
 bt
 ```
-
-
-
