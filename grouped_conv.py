@@ -8,7 +8,7 @@ def pytorch_conv2d(input, weight, bias, padding, stride, kernel, groups):
     return output
 
 
-def naive_grouped_conv2d(input, weight, bias, padding, stride, kernel, groups):
+def naive_grouped_conv2d_nchw(input, weight, bias, padding, stride, kernel, groups):
     # input is of shape (batch_size, in_channels, in_height, in_width)
     # output is of shape (batch_size, out_channels, out_height, out_width)
     # bias is of shape (out_channels,)
@@ -46,9 +46,10 @@ def naive_grouped_conv2d(input, weight, bias, padding, stride, kernel, groups):
     return output
 
 
-def naive_grouped_conv2d_scalar(input, weight, bias, padding, stride, kernel, groups):
+def naive_grouped_conv2d_scalar_nchw(input, weight, bias, padding, stride, kernel, groups):
     # input is of shape (batch_size, in_channels, in_height, in_width)
     # output is of shape (batch_size, out_channels, out_height, out_width)
+    # filter is of shape (out_channels, in_channels, kernel_height, kernel_width)
     # bias is of shape (out_channels,)
     # padding is of shape (padding_height, padding_width)
     # stride is of shape (stride_height, stride_width)
@@ -93,6 +94,52 @@ def naive_grouped_conv2d_scalar(input, weight, bias, padding, stride, kernel, gr
 
     return output
 
+def naive_grouped_conv2d_nhwc(input, weight, bias, padding, stride, kernel, groups):
+    # input is of shape (batch_size, in_height, in_width, in_channels)
+    # output is of shape (batch_size, out_height, out_width, out_channels)
+    # weight is of shape (out_channels, in_channels, kernel_height, kernel_width)
+    # bias is of shape (out_channels,)
+    # padding is of shape (padding_height, padding_width)
+    # stride is of shape (stride_height, stride_width)
+    # kernel is of shape (kernel_height, kernel_width)
+    # groups is an integer
+    
+    batch_size, in_height, in_width, in_channels = input.shape
+    out_channels, _, kernel_height, kernel_width = weight.shape
+    padding_height, padding_width = padding
+    stride_height, stride_width = stride
+
+    # compute output height and width
+    out_height = (in_height + 2 * padding_height - kernel_height) // stride_height + 1
+    out_width = (in_width + 2 * padding_width - kernel_width) // stride_width + 1
+    
+    # split input and weight into groups
+    input_groups = torch.split(input, in_channels // groups, dim=3)
+    weight_groups = torch.split(weight, out_channels // groups, dim=0)
+
+    # perform grouped convolution
+    output = torch.zeros(batch_size, out_height, out_width, out_channels)
+    for i in range(groups):
+        input_group = input_groups[i]
+        weight_group = weight_groups[i]
+        bias_group = bias[out_channels // groups * i: out_channels // groups * (i + 1)]
+
+        for b in range(batch_size):
+            for h_out in range(out_height):
+                for w_out in range(out_width):
+                    dot_product = 0
+                    for c_in in range(in_channels // groups):
+                        for h_k in range(kernel_height):
+                            for w_k in range(kernel_width):
+                                h_in = h_out * stride_height - padding_height + h_k
+                                w_in = w_out * stride_width - padding_width + w_k
+                                if h_in >= 0 and h_in < in_height and w_in >= 0 and w_in < in_width:
+                                    dot_product += input_group[b, h_in, w_in, c_in] * weight_group[out_channels // groups * i: out_channels // groups * (i + 1), c_in, h_k, w_k]
+
+                    output[b, h_out, w_out, out_channels // groups * i: out_channels // groups * (i + 1)] += dot_product + bias_group
+
+    return output
+
 def test_correctness(
     input_shape, weight_shape, bias_shape, padding, stride, kernel, groups
 ):
@@ -108,11 +155,26 @@ def test_correctness(
     pytorch_output = pytorch_conv2d(
         input, weight, bias, padding, stride, kernel, groups
     )
-    naive_output = naive_grouped_conv2d(
+    naive_output_nchw = naive_grouped_conv2d_nchw(
         input, weight, bias, padding, stride, kernel, groups
     )
 
-    assert torch.allclose(pytorch_output, naive_output)
+    assert torch.allclose(pytorch_output, naive_output_nchw)
+    
+    
+    # convert input to NHWC
+    input = input.permute(0, 2, 3, 1)
+    
+    naive_output_nhwc = naive_grouped_conv2d_nhwc(
+        input, weight, bias, padding, stride, kernel, groups
+    )
+    
+    # transpose output back to NCHW
+    naive_output_nhwc = naive_output_nhwc.permute(0, 3, 1, 2)
+    
+    assert torch.allclose(pytorch_output, naive_output_nhwc)
+    
+    
     print("Correctness test passed!")
 
 
