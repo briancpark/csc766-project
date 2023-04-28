@@ -1,207 +1,299 @@
-### A simple example of grouped convolution in NumPy and PyTorch
-
 import torch
-from torch import nn
-import numpy as np
 
-
-# Format of ONNX has been NCHW
-
-
-def torch_conv2d(input, output, weight, bias, kernel, stride, padding, groups, x=None):
-    conv = nn.Conv2d(
-        input[1],
-        output[1],
-        kernel,
-        stride=stride,
-        groups=groups,
-        padding=padding,
-        dtype=torch.float32,
+def pytorch_conv2d(input, weight, bias, padding, stride, kernel, groups):
+    # perform grouped convolution using pytorch
+    output = torch.nn.functional.conv2d(
+        input, weight, bias, stride=stride, padding=padding, groups=groups
     )
-    if x is None:
-        x = torch.randn(input)
-    y = conv(x)
-
-    assert y.shape == output
-    return y
-
-
-def naive_conv2d_nhwc(input, weight, bias, kernel, stride, padding, groups, x, Weight, Bias):
-    # naive convolution algorithm in pytorch
-    # Weights is W, Bias is B, input is x
-    # y is the output to be returned
-
-    # input: input tensor with shape (N, C, H, W)
-    # filters: filter tensor with shape (O, I, K_h, K_w)
-
-    stride_h = stride[0]
-    stride_w = stride[1]
-    pad_h = padding[0]
-    pad_w = padding[1]
-
-    num_groups = groups
-    N, C, H, W = input
-    O, I_group, K_h, K_w = weight
-    I = I_group * num_groups
-
-    N, C, H, W = x.shape
-    O, I_group, K_h, K_w = Weight.shape
-    assert (
-        C % num_groups == 0
-    ), f"Input channels ({C}) must be divisible by number of groups ({num_groups})"
-    assert (
-        I_group * num_groups == C
-    ), f"Input channels ({C}) must equal num_groups ({num_groups}) times I_group ({I_group})"
-    assert (
-        O % num_groups == 0
-    ), f"Output channels ({O}) must be divisible by number of groups ({num_groups})"
-
-    # Compute output dimensions
-    out_h = (H - K_h + 2 * pad_h) // stride_h + 1
-    out_w = (W - K_w + 2 * pad_w) // stride_w + 1
-
-    # Allocate output array
-    output = torch.zeros((N, O, out_h, out_w)) + Bias.view(1, O, 1, 1)
-
-    # Pad input
-    padded_input = torch.nn.functional.pad(
-        x, (pad_w, pad_w, pad_h, pad_h), mode="constant"
-    )
-
-    # Perform grouped convolution
-    for n in range(N):
-        for g in range(num_groups):
-            # Divide input and filters into groups
-            i_group = padded_input[n, g * I_group : (g + 1) * I_group, :, :]
-            k_group = Weight[g * O // num_groups : (g + 1) * O // num_groups, :, :, :]
-
-            # Perform convolution on group
-            for o in range(g * O // num_groups, (g + 1) * O // num_groups):
-                for h in range(out_h):
-                    for w in range(out_w):
-                        for i in range(I_group):
-                            # Compute dot product of kernel and image patch
-                            patch_h_start = h * stride_h
-                            patch_w_start = w * stride_w
-                            patch = i_group[
-                                i,
-                                patch_h_start : patch_h_start + K_h,
-                                patch_w_start : patch_w_start + K_w,
-                            ]
-                            output[n, o, h, w] += torch.sum(
-                                patch * k_group[o - g * O // num_groups, i, :, :]
-                            )
     return output
 
 
-def check_naive_conv2d(input, output, weight, bias, kernel, stride, padding, groups):
-    ### Implement naive convolution
-    conv = nn.Conv2d(
-        input[1],
-        output[1],
-        kernel,
-        stride=stride,
-        groups=groups,
-        padding=padding,
-        dtype=torch.float32,
-    )
-    x = torch.randn(input)
-    with torch.no_grad():
-        y_conv = conv(x)
+def naive_grouped_conv2d_nchw(input, weight, bias, padding, stride, kernel, groups):
+    # input is of shape (batch_size, in_channels, in_height, in_width)
+    # output is of shape (batch_size, out_channels, out_height, out_width)
+    # bias is of shape (out_channels,)
+    # padding is of shape (padding_height, padding_width)
+    # stride is of shape (stride_height, stride_width)
+    # kernel is of shape (kernel_height, kernel_width)
+    # groups is an integer
+    
+    batch_size, in_channels, in_height, in_width = input.shape
+    out_channels, _, kernel_height, kernel_width = weight.shape
+    padding_height, padding_width = padding
+    stride_height, stride_width = stride
 
-    with torch.no_grad():
-        y = naive_conv2d_nhwc(
-            input,
-            weight,
-            bias,
-            kernel,
-            stride,
-            padding,
-            groups,
-            x,
-            conv.weight,
-            conv.bias,
+    # compute output height and width
+    out_height = (in_height + 2 * padding_height - kernel_height) // stride_height + 1
+    out_width = (in_width + 2 * padding_width - kernel_width) // stride_width + 1
+    
+    # split input and weight into groups
+    input_groups = torch.split(input, in_channels // groups, dim=1)
+    weight_groups = torch.split(weight, out_channels // groups, dim=0)
+
+    # perform grouped convolution
+    output = torch.zeros(batch_size, out_channels, out_height, out_width)
+    for i in range(groups):
+        input_group = input_groups[i]
+        weight_group = weight_groups[i]
+        bias_group = bias[out_channels // groups * i: out_channels // groups * (i + 1)]
+
+        output_group = torch.nn.functional.conv2d(
+            input_group, weight_group, bias_group, stride=stride, padding=padding
         )
 
-    ### Compare with PyTorch
-    print("Expected: ", input, output)
-    print("PyTorch : ", x.shape, y_conv.shape)
-    print("Mine    : ", x.shape, y.shape)
+        output[:, out_channels // groups * i: out_channels // groups * (i + 1), :, :] = output_group
 
-    assert torch.allclose(y_conv, y, atol=1e-5)
+    return output
+
+
+def naive_grouped_conv2d_scalar_nchw(input, weight, bias, padding, stride, kernel, groups):
+    # input is of shape (batch_size, in_channels, in_height, in_width)
+    # output is of shape (batch_size, out_channels, out_height, out_width)
+    # filter is of shape (out_channels, in_channels, kernel_height, kernel_width)
+    # bias is of shape (out_channels,)
+    # padding is of shape (padding_height, padding_width)
+    # stride is of shape (stride_height, stride_width)
+    # kernel is of shape (kernel_height, kernel_width)
+    # groups is an integer
+    
+    batch_size, in_channels, in_height, in_width = input.shape
+    out_channels, _, kernel_height, kernel_width = weight.shape
+    padding_height, padding_width = padding
+    stride_height, stride_width = stride
+
+    # compute output height and width
+    out_height = (in_height + 2 * padding_height - kernel_height) // stride_height + 1
+    out_width = (in_width + 2 * padding_width - kernel_width) // stride_width + 1
+    
+    # split input and weight into groups
+    input_groups = torch.split(input, in_channels // groups, dim=1)
+    weight_groups = torch.split(weight, out_channels // groups, dim=0)
+
+    # perform grouped convolution
+    output = torch.zeros(batch_size, out_channels, out_height, out_width)
+    for i in range(groups):
+        input_group = input_groups[i]
+        weight_group = weight_groups[i]
+        bias_group = bias[out_channels // groups * i: out_channels // groups * (i + 1)]
+
+        for b in range(batch_size):
+            for c_out in range(out_channels // groups):
+                for h_out in range(out_height):
+                    for w_out in range(out_width):
+                        h_in = h_out * stride_height - padding_height
+                        w_in = w_out * stride_width - padding_width
+                        dot_product = 0
+                        for c_in in range(in_channels // groups):
+                            for h_k in range(kernel_height):
+                                for w_k in range(kernel_width):
+                                    h = h_in + h_k
+                                    w = w_in + w_k
+                                    if h >= 0 and h < in_height and w >= 0 and w < in_width:
+                                        dot_product += input_group[b, c_in, h, w] * weight_group[c_out, c_in, h_k, w_k]
+                        output[b, out_channels // groups * i + c_out, h_out, w_out] += dot_product + bias_group[c_out]
+
+    return output
+
+def naive_grouped_conv2d_nhwc(input, weight, bias, padding, stride, kernel, groups):
+    # input is of shape (batch_size, in_height, in_width, in_channels)
+    # output is of shape (batch_size, out_height, out_width, out_channels)
+    # weight is of shape (out_channels, in_channels, kernel_height, kernel_width)
+    # bias is of shape (out_channels,)
+    # padding is of shape (padding_height, padding_width)
+    # stride is of shape (stride_height, stride_width)
+    # kernel is of shape (kernel_height, kernel_width)
+    # groups is an integer
+    
+    batch_size, in_height, in_width, in_channels = input.shape
+    out_channels, _, kernel_height, kernel_width = weight.shape
+    padding_height, padding_width = padding
+    stride_height, stride_width = stride
+
+    # compute output height and width
+    out_height = (in_height + 2 * padding_height - kernel_height) // stride_height + 1
+    out_width = (in_width + 2 * padding_width - kernel_width) // stride_width + 1
+    
+    # split input and weight into groups
+    input_groups = torch.split(input, in_channels // groups, dim=3)
+    weight_groups = torch.split(weight, out_channels // groups, dim=0)
+
+    # perform grouped convolution
+    output = torch.zeros(batch_size, out_height, out_width, out_channels)
+    for i in range(groups):
+        input_group = input_groups[i]
+        weight_group = weight_groups[i]
+        bias_group = bias[out_channels // groups * i: out_channels // groups * (i + 1)]
+
+        for b in range(batch_size):
+            for h_out in range(out_height):
+                for w_out in range(out_width):
+                    dot_product = 0
+                    for c_in in range(in_channels // groups):
+                        for h_k in range(kernel_height):
+                            for w_k in range(kernel_width):
+                                h_in = h_out * stride_height - padding_height + h_k
+                                w_in = w_out * stride_width - padding_width + w_k
+                                if h_in >= 0 and h_in < in_height and w_in >= 0 and w_in < in_width:
+                                    dot_product += input_group[b, h_in, w_in, c_in] * weight_group[out_channels // groups * i: out_channels // groups * (i + 1), c_in, h_k, w_k]
+
+                    output[b, h_out, w_out, out_channels // groups * i: out_channels // groups * (i + 1)] += dot_product + bias_group
+
+    return output
+
+def test_correctness(
+    input_shape, weight_shape, bias_shape, padding, stride, kernel, groups
+):
+    input = torch.randn(input_shape)
+    weight = torch.randn(weight_shape)
+    bias = torch.randn(bias_shape)
+    
+    
+    input = torch.abs(input) * 1000
+    weight = torch.abs(weight) * 1000
+    bias = torch.abs(bias) * 1000
+
+    pytorch_output = pytorch_conv2d(
+        input, weight, bias, padding, stride, kernel, groups
+    )
+    naive_output_nchw = naive_grouped_conv2d_nchw(
+        input, weight, bias, padding, stride, kernel, groups
+    )
+
+    assert torch.allclose(pytorch_output, naive_output_nchw)
+    
+    
+    # convert input to NHWC
+    input = input.permute(0, 2, 3, 1)
+    
+    naive_output_nhwc = naive_grouped_conv2d_nhwc(
+        input, weight, bias, padding, stride, kernel, groups
+    )
+    
+    # transpose output back to NCHW
+    naive_output_nhwc = naive_output_nhwc.permute(0, 3, 1, 2)
+    
+    assert torch.allclose(pytorch_output, naive_output_nhwc)
+    
+    
+    print("Correctness test passed!")
 
 
 if __name__ == "__main__":
-    with torch.no_grad():
-        config0 = (
-            (1, 24, 112, 112),
-            (1, 24, 56, 56),
-            (24, 8, 3, 3),
-            24,
-            (3, 3),
-            (2, 2),
-            (1, 1),
-            3,
-        )
-        config1 = (
-            (1, 56, 56, 56),
-            (1, 56, 28, 28),
-            (56, 8, 3, 3),
-            56,
-            (3, 3),
-            (2, 2),
-            (1, 1),
-            7,
-        )
-        config2 = (
-            (1, 152, 28, 28),
-            (1, 152, 14, 14),
-            (152, 8, 3, 3),
-            152,
-            (3, 3),
-            (2, 2),
-            (1, 1),
-            19,
-        )
-        config3 = (
-            (1, 152, 14, 14),
-            (1, 152, 14, 14),
-            (152, 8, 3, 3),
-            152,
-            (3, 3),
-            (1, 1),
-            (1, 1),
-            19,
-        )
-        config4 = (
-            (1, 368, 14, 14),
-            (1, 368, 7, 7),
-            (368, 8, 3, 3),
-            368,
-            (3, 3),
-            (2, 2),
-            (1, 1),
-            46,
-        )
-        config5 = (
-            (1, 368, 7, 7),
-            (1, 368, 7, 7),
-            (368, 8, 3, 3),
-            368,
-            (3, 3),
-            (1, 1),
-            (1, 1),
-            46,
-        )
+    input_shapes = [
+        (1, 24, 112, 112),
+        (1, 56, 56, 56),
+        (1, 152, 28, 28),
+        (1, 152, 14, 14),
+        (1, 152, 14, 14),
+        (1, 152, 14, 14),
+        (1, 368, 14, 14),
+        (1, 368, 7, 7),
+        (1, 368, 7, 7),
+        (1, 368, 7, 7),
+        (1, 368, 7, 7),
+        (1, 368, 7, 7),
+        (1, 368, 7, 7),
+    ]
 
-        torch_conv2d(*config0)
-        torch_conv2d(*config1)
-        torch_conv2d(*config2)
-        torch_conv2d(*config3)
-        torch_conv2d(*config4)
+    weight_shapes = [
+        (24, 8, 3, 3),
+        (56, 8, 3, 3),
+        (152, 8, 3, 3),
+        (152, 8, 3, 3),
+        (152, 8, 3, 3),
+        (152, 8, 3, 3),
+        (368, 8, 3, 3),
+        (368, 8, 3, 3),
+        (368, 8, 3, 3),
+        (368, 8, 3, 3),
+        (368, 8, 3, 3),
+        (368, 8, 3, 3),
+        (368, 8, 3, 3),
+    ]
 
-        check_naive_conv2d(*config0)
-        check_naive_conv2d(*config1)
-        check_naive_conv2d(*config2)
-        check_naive_conv2d(*config3)
-        check_naive_conv2d(*config4)
+    bias_shapes = [
+        24,
+        56,
+        152,
+        152,
+        152,
+        152,
+        368,
+        368,
+        368,
+        368,
+        368,
+        368,
+        368,
+    ]
+
+    strides = [
+        (2, 2),
+        (2, 2),
+        (2, 2),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (2, 2),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+    ]
+
+    padding = [
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+        (1, 1),
+    ]
+
+    kernels = [
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+        (3, 3),
+    ]
+
+    groups = [
+        3,
+        7,
+        19,
+        19,
+        19,
+        19,
+        46,
+        46,
+        46,
+        46,
+        46,
+        46,
+        46,
+    ]
+
+    for input_shape, weight_shape, bias_shape, stride, padding, kernel, group in zip(
+        input_shapes, weight_shapes, bias_shapes, strides, padding, kernels, groups
+    ):
+        test_correctness(
+            input_shape, weight_shape, bias_shape, padding, stride, kernel, group
+        )
