@@ -16,7 +16,7 @@ Table of Contents
 ## Prerequisites
 The hardware requirements are any Linux machine with Ubuntu installed and an Android smartphone. 
 
-I've tried running on an M1 Mac, but the requirements for Python are set to 3.6, which is difficult to get installed natively on the ARM ISA. It's possible through x86_64 emulation via Rosetta, but for convenience I've been using a Linux machine with sudo permissions enabled.
+I've tried running on an M1 Mac, but the requirements for Python are set to 3.7, which is difficult to get installed natively on an ARM platform. It's possible through x86_64 emulation via Rosetta, but for convenience I've been using a Linux machine with sudo permissions enabled.
 
 ## Setup
 First, clone the repository and all submodules.
@@ -107,9 +107,10 @@ git clone git@github.com:briancpark/mace.git
 The task of this project is to support the operators for DNNs ShuffleNet and RegNet.
 
 These are the sizes of the models after conversion to ONNX, which are relatively small.
+
 ```
 11M     regnet.onnx
-20M     shufflenet.onnx
+5.3M    shufflenet_opt_pt-sim.onnx
 ```
 
 The models are available in the `onnx_models` directory.
@@ -121,13 +122,14 @@ The OS is Android 11 (RKQ1.200826.002), with MIUI 12.5.1. The device has a 4,250
 Source: https://www.gsmarena.com/xiaomi_mi_11_lite-10665.php
 
 
-
 ### Debugging and Running Notes
+First you will need to optimize ONNX files as follows:
 ```sh
 python tools/onnx_optimizer.py ../onnx_models/regnet.onnx ../onnx_models/regnet_opt.onnx 
 python tools/onnx_optimizer.py ../onnx_models/shufflenet.onnx ../onnx_models/shufflenet_opt.onnx
 ```
  
+Once done so, check the SHA256 checksums to make sure that the files are the same. You will later need to have the checksum for the configuration file, but I've already included it in the repository. So the following commands are just for reference.
 ```sh
 sha256sum /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
 sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
@@ -145,44 +147,38 @@ python tools/converter.py convert --config=../deployment_config/shufflenet.yml -
 python tools/converter.py run --config=../deployment_config/shufflenet.yml --debug_mode --vlog_level=3
 ```
 
-There are 
-```sh
-python tools/converter.py convert --config=../deployment_config/regnet.yml
-```
-
 To verify model correctness, you can run the following command:
 ```sh
 python tools/converter.py run --config=../deployment_config/regnet.yml --validate
 python tools/converter.py run --config=../deployment_config/shufflenet.yml --validate
 ```
 
-
 To benchmark the model, you can run the following command:
 ```sh
 # RegNet
 python tools/converter.py run --config=../deployment_config/regnet.yml --benchmark --round=1000 --gpu_priority_hint=3
-python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --round=1000 --gpu_priority_hint=3
-
 # ShuffleNet
-python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --benchmark_repetitions=1 --benchmark_warmup=0
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --benchmark --round=1000 --gpu_priority_hint=3
 ```
 
-
-To benchmark a specific OP (not done yet):
+To benchmark a specific OP (TODO: this doesn't work yet for the ops I've implemented):
+```sh
 python tools/bazel_adb_run.py --target="//test/ccbenchmark:mace_cc_benchmark" --run_target=True  --args="--filter=.*CONV.*"
-
-
-The files are uploaded onto `/data/local/tmp/mace_run/`
-
-Here's a sample on how to benchmark the kernels.
-
-
-Look here for a comprehensive list of supported operators: https://mace.readthedocs.io/en/latest/user_guide/op_lists.html
-
-# Here's a reference on how to run one of the working examples:
 ```
+
+The files are uploaded onto `/data/local/tmp/mace_run/` directory on the device.
+
+
+After doing this project, it turns out not all ops are fully supported for each hardware target. Look here for a comprehensive list of supported operators: https://mace.readthedocs.io/en/latest/user_guide/op_lists.html
+
+#### Run MACE Model Zoo Models
+This is for my own reference, when I want to debug through a fully implemented model for reference. 
+
+```sh
+# Convert the model
 python tools/converter.py convert --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
 
+# Run the model
 python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml
 
 # Test model run time
@@ -192,10 +188,3 @@ python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.
 # original model and framework, measured with cosine distance for similarity.
 python tools/converter.py run --config=../mace-models/mobilenet-v2/mobilenet-v2.yml --validate
 ```
-
-
-python tools/converter.py convert --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
-
-python tools/converter.py run --config=../mace-models/shufflenet-v2/shufflenet-v2.yml --debug_mode --vlog_level=3
-
-
