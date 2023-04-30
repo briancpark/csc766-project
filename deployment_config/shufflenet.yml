@@ -26,4 +26,3 @@ models:
         backend: tensorflow
     # cpu, gpu or cpu+gpu
     runtime: gpu
-    winograd: 0

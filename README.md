@@ -153,6 +153,30 @@ python tools/converter.py run --config=../deployment_config/regnet.yml --validat
 python tools/converter.py run --config=../deployment_config/shufflenet.yml --validate
 ```
 
+A correct model will output the following in green. This is tested on sythetic data. Simulatriy is cosine simularity, where values closer to 1.0 is correct. SQNR is signal to quantization noise ratio, where higher is better. Pixel accuracy is the percentage of pixels that are the same between the two models, where values closer to 1.0 is correct. You can learn more [here](https://mace.readthedocs.io/en/latest/development/how_to_debug.html).
+
+```
+output MACE VS ONNX similarity: 0.9999781457219321 , sqnr: 22823.096153305403 , pixel_accuracy: 1.0
+******************************************
+          Similarity Test Passed          
+******************************************
+```
+
+An incorrect model will output the following in red:
+
+```
+output MACE VS ONNX similarity: 0.017589891526221674 , sqnr: 0.10534350168590623 , pixel_accuracy: 0.0
+ERROR: [] /home/bcpark/csc766-project/mace/tools/validate.py:131: ******************************************
+          Similarity Test Failed          
+******************************************
+```
+
+You can validate the model layer by layer, but this can give some false positives since the model is cross validated against ONNX model, and some MACE ops are fused or optimized. 
+```sh
+python tools/converter.py run --config=../deployment_config/regnet.yml --validate --layers :
+python tools/converter.py run --config=../deployment_config/shufflenet.yml --validate --layers :
+```
+
 To benchmark the model, you can run the following command:
 ```sh
 # RegNet
