@@ -1,6 +1,6 @@
-# DNN Operator Optimizations
+# Optimizing DNN Operators on Mobile GPUs
 
-This is a final course project done for CSC 766: Code Optimizations of Scalar and Parallel Programs
+This is a final course project done for CSC 766: Code Optimizations of Scalar and Parallel Programs.
 
 ## Overview
 Table of Contents
@@ -133,6 +133,19 @@ Once done so, check the SHA256 checksums to make sure that the files are the sam
 ```sh
 sha256sum /home/bcpark/csc766-project/onnx_models/regnet_opt.onnx 
 sha256sum /home/bcpark/csc766-project/onnx_models/shufflenet_opt.onnx
+```
+
+**IMPORTANT**: When compiling and running between the two models, please make sure to checkout the correct branch that contains the changes for each model. The `master` branch is just a copy of the original MACE repository, and does not contain the changes for the unsupported operators.
+
+`regnet-gpu-optimized` contains the changes for RegNet, and `shufflenet-gpu-optimized` contains the changes for ShuffleNet.
+
+```sh
+cd mace
+git checkout regnet-gpu-optimized
+# Run RegNet related commands
+
+git checkout shufflenet-gpu-optimized
+# Run ShuffleNet related commands
 ```
 
 To compile and run RegNet:
