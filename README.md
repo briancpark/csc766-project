@@ -277,3 +277,5 @@ git diff --stat origin
  tools/python/transform/transformer.py    |  12 +-
  7 files changed, 244 insertions(+), 282 deletions(-)
 ```
+
+Some more detailed debugging notes and results obtained are shown in [DEVELPMENT.md](DEVELOPMENT.md).

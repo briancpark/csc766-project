@@ -125,10 +125,15 @@ Op Stats:
 ```
 
 #### RegNet GPU (Xiaomi Mi 11 Lite)
+GPU Run:
+```
 ========================================================
      capability(CPU)        init      warmup     run_avg
 ========================================================
 time          25.273     657.812     958.826      15.472
+```
+
+Op Stats:
 ```
 ----------------------------------------------------------------------------------------------
                                        Stat by Op Type
@@ -149,10 +154,15 @@ time          25.273     657.812     958.826      15.472
 ### ShuffleNet V2+
 
 #### ShuffleNet CPU (Xiaomi Mi 11 Lite)
+CPU Run:
+```
 ========================================================
      capability(CPU)        init      warmup     run_avg
 ========================================================
 time          27.272      17.908      58.789       8.962
+```
+
+Op Stats:
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -170,12 +180,15 @@ time          27.272      17.908      58.789       8.962
 ```
 
 #### ShuffleNet GPU (Xiaomi Mi 11 Lite)
+CPU Run:
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
 ========================================================
 time          25.368     943.820    1026.954      59.541
 ```
+
+Op Stats:
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -194,14 +207,6 @@ time          25.368     943.820    1026.954      59.541
 |         Pooling |     1 |   0.107 |  0.117 | 100.000 |          0 |  0.000 |            1 |
 ---------------------------------------------------------------------------------------------
 ```
-
-
-
-
-
-
-
-
 
 #### RegNet CPU (Moto G6)
 CPU Run:
@@ -230,10 +235,15 @@ Op Stats:
 ```
 
 #### RegNet GPU (Moto G6)
+GPU Run:
+```
 ========================================================
      capability(CPU)        init      warmup     run_avg
 ========================================================
 time          55.178    2700.688    3718.320      53.052
+```
+
+Op Stats:
 ```
 ----------------------------------------------------------------------------------------------
                                        Stat by Op Type
@@ -250,14 +260,18 @@ time          55.178    2700.688    3718.320      53.052
 |         Reshape |     1 |   0.006 |  0.012 | 100.000 |           0 |  0.000 |            1 |
 ----------------------------------------------------------------------------------------------
 ```
+
 #### ShuffleNet CPU (Moto G6)
 
+CPU Run:
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
 ========================================================
 time          59.729      66.958      25.449      21.213
 ```
+
+Op Stats:
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -276,11 +290,16 @@ time          59.729      66.958      25.449      21.213
 ```
 
 #### ShuffleNet GPU (Moto G6)
+GPU Run:
+```
 ========================================================
      capability(CPU)        init      warmup     run_avg
 ========================================================
 time          55.252    4036.736    4707.018      99.509
+```
 
+Op Stats:
+```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
 ---------------------------------------------------------------------------------------------
@@ -297,17 +316,21 @@ time          55.252    4036.736    4707.018      99.509
 |  ChannelShuffle |    16 |   0.936 |  1.361 |  98.979 |          0 |  0.000 |           16 |
 |         Pooling |     1 |   0.702 |  1.021 | 100.000 |          0 |  0.000 |            1 |
 ---------------------------------------------------------------------------------------------
+```
+
 ## How to Debug with GDB (An Attempt)
 This configuration is impossible unless you have a rooted device, which requires you to unlock the bootloader and flash a custom recovery image.
 
 All the files to run are pushed to `/data/local/tmp/mace_run`
 
 Here's an example of what the executable looks like if you want to run it directly in the shell under `cmd_file-r**`:
-```
+
+```sh
 LD_LIBRARY_PATH=/data/local/tmp/mace_run MACE_TUNING=0 MACE_OUT_OF_RANGE_CHECK=0 MACE_CPP_MIN_VLOG_LEVEL=0 MACE_RUN_PARAMETER_PATH=/data/local/tmp/mace_run/mace_run.config MACE_INTERNAL_STORAGE_PATH=/data/local/tmp/mace_run/interior/ MACE_LIMIT_OPENCL_KERNEL_TIME=0 MACE_OPENCL_QUEUE_WINDOW_SIZE=0 MACE_RUNTIME_FAILURE_RATIO=0.000000 MACE_LOG_TENSOR_RANGE=0 /data/local/tmp/mace_run/mace_run_static --model_name=regnet --input_node='input' --output_node='output' --input_shape=1,224,224,3 --output_shape=1,1000 --input_data_type=float32 --output_data_type=float32 --input_data_format=NHWC --output_data_format=NHWC --input_file=/data/local/tmp/mace_run/model_input --output_file=/data/local/tmp/mace_run/model_out --input_dir= --output_dir= --model_data_file=/data/local/tmp/mace_run/regnet.data --round=1 --restart_round=1 --num_threads=-1 --cpu_affinity_policy=1 --opencl_cache_reuse_policy=1 --opencl_cache_full_path=/data/local/tmp/mace_run/interior/mace_cl_compiled_program.bin --gpu_perf_hint=3 --gpu_priority_hint=3 --model_file=/data/local/tmp/mace_run/regnet.pb --opencl_binary_file=/data/local/tmp/mace_run/regnet_compiled_opencl_kernel.M2101K9AG.sm6150.bin --opencl_parameter_file=/data/local/tmp/mace_run/regnet_tuned_opencl_parameter.M2101K9AG.sm6150.bin --accelerator_cache_policy=0 --accelerator_binary_file= --accelerator_storage_file= --apu_boost_hint=100 --apu_preference_hint=1
 ```
 
 These are the series of commands I've tried. I've had no success unfortunately, so print/log statements it is...
+
 ```sh
 # push gdbserver to your phone
 adb push $ANDROID_NDK_HOME/prebuilt/android-arm64/gdbserver/gdbserver /data/local/tmp/
