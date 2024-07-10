@@ -1,8 +1,11 @@
 # Development and Debugging Logs
-A set of logs and debugging notes to help with devleopment process 
+
+A set of logs and debugging notes to help with devleopment process
 
 ## Overview
+
 Table of Contents
+
 - [Overview](#overview)
 - [I cannot login to my Android shell?](#i-cannot-login-to-my-android-shell)
 - [RegNet Notes](#regnet-notes)
@@ -10,21 +13,25 @@ Table of Contents
 - [Results](#results)
 - [How to Debug with GDB (An Attempt)](#how-to-debug-with-gdb-an-attempt)
 
-
 ## I cannot login to my Android shell?
-If you cannot login to you android shell via adb because you get the following message:
+
+If you cannot login to your Android shell via `adb` because you get the following message:
+
 ```
 no permissions (user bcpark is not in the plugdev group)
 ```
-Then you may need to troubleshoot this by restarting the adb server. You can do so by running the following commands:
+
+Then you may need to troubleshoot this by restarting the `adb` server. You can do so by running the following commands:
+
 ```sh
 sudo adb kill-server
 sudo adb start-server
 ```
 
-Note that upon rebooting the server, you will need to physically reauthenticate the Android device in order to login the shell and let MACE run models on the phone. 
+Note that upon rebooting the server, you will need to physically reauthenticate the Android device in order to login the shell and let MACE run models on the phone.
 
 ## RegNet Notes
+
 All that needs to be supported is convolutions with groups, or grouped convolutions. There are a total of 13 grouped convolutions in the RegNet model.
 
 To debug and ensure correctness, I have outputted all the information needed to replicate step by step on another deep learning framework or library. Note that all of the parameters are based on the assumption of batch size 1. They all have dialation of 1. They are all zero padded.
@@ -56,16 +63,16 @@ Here are just the unique microkernels to focus on:
 | 1,368,14,14 | 1,368,7,7 | 368,8,3,3 | 368 | 3,3 | 2,2 | 1,1,1,1 | 46 |
 | 1,368,7,7 | 1,368,7,7 | 368,8,3,3 | 368 | 3,3 | 1,1 | 1,1,1,1 | 46 |
 
-
 Note that MACE prefers NHWC format on the GPU since that is optimal for GPU and OpenCL. The CPU preferes NCHW format. I believe CPU is more flexible, but there may be performance penalties as the MACE focuses more on NCHW format for CPU.
 
-
 When compared against the CPU and GPU configrations, here are some notes:
+
 * CPU compiles to a total of 86 ops, this is because I didn't fuse any activations with the group convolutions
 * GPU compiles to a total of 75 ops
 * Only the last GEMM or matmul will fallback to CPU on GPU configuration
 
 ## ShuffleNet Notes
+
 ShuffleNet supports grouped convolution on the CPU and GPU, but for GPU, it only supports groups of 4. The task is to support groups of 2 for the specific ShuffleNet model that I am using. There are a total of 16 channel shuffle ops in the ShuffleNet model. The input shape is same as the output shape.
 
 |         Op Type |  Output Shape |           name |
@@ -88,18 +95,22 @@ ShuffleNet supports grouped convolution on the CPU and GPU, but for GPU, it only
 |  ChannelShuffle |   [1,192,7,7] |  Transpose_732 |
 
 When compared against the CPU and GPU configrations, here are some notes:
+
 * CPU compiles to a total of 117 ops
 * GPU compiles to a total of 224 ops
 * GEMM, Reduce Mean, Slice, Concat all fallback to CPU on GPU configuration
 * There are drastically more ops on the GPU configuration because of the fallbacks to CPU, and it incurs a lot of overhead because there are transpose ops inserted to convert from NHWC to NCHW and vice versa.
 
 ## Results
-Here, I show some logs and results from running the models on the Android device. 
+
+Here, I show some logs and results from running the models on the Android device.
 
 ### RegNet
 
 #### RegNet CPU (Xiaomi Mi 11 Lite)
+
 CPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -108,6 +119,7 @@ time          24.795      22.323      66.165      18.434
 ```
 
 Op Stats:
+
 ```
 ------------------------------------------------------------------------------------------
                                      Stat by Op Type
@@ -125,7 +137,9 @@ Op Stats:
 ```
 
 #### RegNet GPU (Xiaomi Mi 11 Lite)
+
 GPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -134,6 +148,7 @@ time          25.273     657.812     958.826      15.472
 ```
 
 Op Stats:
+
 ```
 ----------------------------------------------------------------------------------------------
                                        Stat by Op Type
@@ -154,7 +169,9 @@ Op Stats:
 ### ShuffleNet V2+
 
 #### ShuffleNet CPU (Xiaomi Mi 11 Lite)
+
 CPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -163,6 +180,7 @@ time          27.272      17.908      58.789       8.962
 ```
 
 Op Stats:
+
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -180,7 +198,9 @@ Op Stats:
 ```
 
 #### ShuffleNet GPU (Xiaomi Mi 11 Lite)
+
 CPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -189,6 +209,7 @@ time          25.368     943.820    1026.954      59.541
 ```
 
 Op Stats:
+
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -209,7 +230,9 @@ Op Stats:
 ```
 
 #### RegNet CPU (Moto G6)
+
 CPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -218,6 +241,7 @@ time          57.007      81.247      47.320      42.103
 ```
 
 Op Stats:
+
 ```
 ------------------------------------------------------------------------------------------
                                      Stat by Op Type
@@ -235,7 +259,9 @@ Op Stats:
 ```
 
 #### RegNet GPU (Moto G6)
+
 GPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -244,6 +270,7 @@ time          55.178    2700.688    3718.320      53.052
 ```
 
 Op Stats:
+
 ```
 ----------------------------------------------------------------------------------------------
                                        Stat by Op Type
@@ -264,6 +291,7 @@ Op Stats:
 #### ShuffleNet CPU (Moto G6)
 
 CPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -272,6 +300,7 @@ time          59.729      66.958      25.449      21.213
 ```
 
 Op Stats:
+
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -290,7 +319,9 @@ Op Stats:
 ```
 
 #### ShuffleNet GPU (Moto G6)
+
 GPU Run:
+
 ```
 ========================================================
      capability(CPU)        init      warmup     run_avg
@@ -299,6 +330,7 @@ time          55.252    4036.736    4707.018      99.509
 ```
 
 Op Stats:
+
 ```
 ---------------------------------------------------------------------------------------------
                                       Stat by Op Type
@@ -319,6 +351,7 @@ Op Stats:
 ```
 
 ## How to Debug with GDB (An Attempt)
+
 This configuration is impossible unless you have a rooted device, which requires you to unlock the bootloader and flash a custom recovery image.
 
 All the files to run are pushed to `/data/local/tmp/mace_run`
